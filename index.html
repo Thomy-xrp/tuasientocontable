@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Generador de Asientos Contables</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+ body {
+   background:#f8f9fa;
+   font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;
+ }
+ h1 {
+   text-align:center;
+   margin:20px 0 8px;
+   font-weight:700;
+   color:#0d6efd;
+ }
+ h2.subtitulo {
+   text-align:center;
+   font-size:1.1rem;
+   color:#555;
+   margin-bottom:24px;
+ }
+ .card {
+   box-shadow:0 4px 8px rgba(0,0,0,.05);
+   border:none;
+ }
+ table {
+   width:100%;
+   border-collapse:collapse;
+   margin-top:1rem;
+ }
+ th,td {
+   border:1px solid #dee2e6;
+   padding:8px;
+ }
+ th {
+   background:#f1f3f5;
+ }
+.glosa {
+  font-style: italic;
+  background:#f8f9fa;
+}
+.glosa td {
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+ }
+ /* Bordes más visibles en inputs y selects */
+ input.form-control, select.form-select {
+   border:2px solid #999;
+ }
+ input.form-control:focus, select.form-select:focus {
+   border-color:#0d6efd;
+   box-shadow:none;
+ }
+ .muted { color:#6c757d; }
+</style>
+</head>
+<body>
+<div class="container py-3">
+  <h1>Generador de Asientos Contables</h1>
+  <h2 class="subtitulo">Ingresa los datos de la operación para generar el asiento contable correspondiente</h2>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card p-4">
+        <h5 class="mb-3">Datos de la operación</h5>
+        <div class="mb-3">
+          <label class="form-label">Tipo de operación</label>
+          <select id="tipo" class="form-select">
+            <option value="compra_igv">Compra de mercaderías con IGV</option>
+            <option value="compra_sinigv">Compra de mercaderías sin IGV</option>
+            <option value="venta_igv">Venta de mercaderías con IGV</option>
+            <option value="venta_sinigv">Venta de mercaderías sin IGV</option>
+            <option value="servicio_igv">Compra de servicios con IGV</option>
+            <option value="servicio_sinigv">Compra de servicios sin IGV</option>
+            <option value="remuneraciones">Asiento de remuneraciones</option>
+            <option value="venta_activo">Venta de activo fijo con IGV</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Monto base (sin IGV)</label>
+          <input type="number" id="monto" class="form-control" step="0.01" min="0.01" placeholder="Ej: 1000.00">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Fecha</label>
+          <input type="date" id="fecha" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Glosa</label>
+          <input type="text" id="glosa" class="form-control" placeholder="Ej: Venta de mercaderías">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-4">
+        <h5 class="mb-3">Vista previa del asiento</h5>
+        <div id="resultado" class="muted">Aquí aparecerá el asiento contable...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const tipoEl=document.getElementById('tipo');
+  const montoEl=document.getElementById('monto');
+  const fechaEl=document.getElementById('fecha');
+  const glosaEl=document.getElementById('glosa');
+  const outEl=document.getElementById('resultado');
+  const IGV=0.18,fmt=n=>Number(n).toFixed(2);
+
+  function compraMerc(m,conIgv){
+    return conIgv?[
+      {c:'601',d:'Mercaderías',de:fmt(m),ha:''},
+      {c:'40111',d:'IGV – Crédito Fiscal',de:fmt(m*IGV),ha:''},
+      {c:'4212',d:'Facturas por pagar',de:'',ha:fmt(m*(1+IGV))}
+    ]:[
+      {c:'601',d:'Mercaderías',de:fmt(m),ha:''},
+      {c:'4212',d:'Facturas por pagar',de:'',ha:fmt(m)}
+    ];
+  }
+  function ventaMerc(m,conIgv){
+    return conIgv?[
+      {c:'1212',d:'Facturas por cobrar',de:fmt(m*(1+IGV)),ha:''},
+      {c:'701',d:'Ventas',de:'',ha:fmt(m)},
+      {c:'40111',d:'IGV – Débito Fiscal',de:'',ha:fmt(m*IGV)}
+    ]:[
+      {c:'1212',d:'Facturas por cobrar',de:fmt(m),ha:''},
+      {c:'701',d:'Ventas',de:'',ha:fmt(m)}
+    ];
+  }
+  function compraServ(m,conIgv){
+    return conIgv?[
+      {c:'631',d:'Gastos de servicios',de:fmt(m),ha:''},
+      {c:'40111',d:'IGV – Crédito Fiscal',de:fmt(m*IGV),ha:''},
+      {c:'4212',d:'Facturas por pagar',de:'',ha:fmt(m*(1+IGV))}
+    ]:[
+      {c:'631',d:'Gastos de servicios',de:fmt(m),ha:''},
+      {c:'4212',d:'Facturas por pagar',de:'',ha:fmt(m)}
+    ];
+  }
+  function remuneraciones(m){
+    const ess=m*0.09,onp=m*0.13,neto=m-onp;
+    return [
+      {c:'621',d:'Sueldos y salarios',de:fmt(m),ha:''},
+      {c:'6271',d:'ESSALUD',de:fmt(ess),ha:''},
+      {c:'401',d:'ONP por pagar',de:'',ha:fmt(onp)},
+      {c:'411',d:'Remuneraciones por pagar',de:'',ha:fmt(neto)}
+    ];
+  }
+  function ventaActivo(m){
+    const costo=m*0.6;
+    return [
+      {c:'1212',d:'Facturas por cobrar',de:fmt(m*(1+IGV)),ha:''},
+      {c:'759',d:'Otros ingresos por venta de activos',de:'',ha:fmt(m)},
+      {c:'40111',d:'IGV – Débito Fiscal',de:'',ha:fmt(m*IGV)},
+      {c:'791',d:'Costo de venta de activos',de:fmt(costo),ha:''},
+      {c:'33',d:'Activo fijo',de:'',ha:fmt(costo)}
+    ];
+  }
+  function rowsHTML(f){
+    return f.map(x=>`<tr><td>${x.c}</td><td>${x.d}</td><td>${x.de}</td><td>${x.ha}</td></tr>`).join('');
+  }
+  function generar(){
+    const t=tipoEl.value,
+          m=parseFloat(montoEl.value),
+          fe=fechaEl.value||'—',
+          gl=(glosaEl.value||'—').trim();
+    if(isNaN(m)||m<=0){
+      outEl.innerHTML='<em>Ingrese un monto válido para ver el asiento...</em>';
+      return;
+    }
+    let filas=[];
+    if(t==='compra_igv') filas=compraMerc(m,true);
+    else if(t==='compra_sinigv') filas=compraMerc(m,false);
+    else if(t==='venta_igv') filas=ventaMerc(m,true);
+    else if(t==='venta_sinigv') filas=ventaMerc(m,false);
+    else if(t==='servicio_igv') filas=compraServ(m,true);
+    else if(t==='servicio_sinigv') filas=compraServ(m,false);
+    else if(t==='remuneraciones') filas=remuneraciones(m);
+    else if(t==='venta_activo') filas=ventaActivo(m);
+
+    outEl.innerHTML=`<p><strong>Fecha:</strong> ${fe}</p>
+    <table>
+      <thead><tr><th>Cuenta</th><th>Descripción</th><th>Debe</th><th>Haber</th></tr></thead>
+      <tbody>${rowsHTML(filas)}<tr class="glosa"><td colspan="4">Glosa: ${gl}</td></tr></tbody>
+    </table>`;
+  }
+
+  // Eventos para actualizar en tiempo real
+  ['input','change'].forEach(e=>{
+    tipoEl.addEventListener(e,generar);
+    montoEl.addEventListener(e,generar);
+    fechaEl.addEventListener(e,generar);
+    glosaEl.addEventListener(e,generar);
+  });
+
+  // Estado inicial
+  outEl.innerHTML = 'Aquí aparecerá el asiento contable...';
+})();
+</script>
+</body>
+</html>

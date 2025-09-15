@@ -1,0 +1,25 @@
+body {
+  font-family: 'Open Sans', sans-serif;
+}
+
+#result table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+
+#result th,
+#result td {
+  border: 1px solid #dee2e6;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+#result th {
+  background-color: #f8f9fa;
+}
+
+.glosa {
+  font-style: italic;
+  background-color: #f1f1f1;
+}

@@ -165,9 +165,9 @@
   const interes = m * 0.05; // 5% de interés de ejemplo
   const total = m + interes;
   return [
-    {c:'421', d:'Préstamos bancarios por pagar', de:fmt(m), ha:''},
+    {c:'451', d:'Préstamos bancarios por pagar', de:fmt(m), ha:''},
     {c:'671', d:'Gastos financieros (intereses)', de:fmt(interes), ha:''},
-    {c:'101', d:'Caja/Bancos', de:'', ha:fmt(total)}
+    {c:'104', d:'Cuentas corrientes en instituciones financieras', de:'', ha:fmt(total)}
   ];
 }
   function rowsHTML(f){
@@ -214,4 +214,5 @@
 </script>
 </body>
 </html>
+
 

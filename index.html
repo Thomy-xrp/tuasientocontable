@@ -48,7 +48,6 @@
   word-break: break-word;
 }
  }
- /* Bordes más visibles en inputs y selects */
  input.form-control, select.form-select {
    border:2px solid #999;
  }
@@ -74,10 +73,11 @@
             <option value="compra_sinigv">Compra de mercaderías sin IGV</option>
             <option value="venta_igv">Venta de mercaderías con IGV</option>
             <option value="venta_sinigv">Venta de mercaderías sin IGV</option>
-            <option value="servicio_igv">Compra de servicios con IGV</option>
-            <option value="servicio_sinigv">Compra de servicios sin IGV</option>
+            <option value="servicio_igv">Gastos de servicios con IGV</option>
+            <option value="servicio_sinigv">Gastos de servicios sin IGV</option>
             <option value="remuneraciones">Asiento de remuneraciones</option>
             <option value="venta_activo">Venta de activo fijo con IGV</option>
+           <option value="prestamo_banco">Pago de préstamo bancario con intereses</option>
           </select>
         </div>
         <div class="mb-3">
@@ -161,6 +161,15 @@
       {c:'33',d:'Activo fijo',de:'',ha:fmt(costo)}
     ];
   }
+ function pagoPrestamo(m){
+  const interes = m * 0.05; // 5% de interés de ejemplo
+  const total = m + interes;
+  return [
+    {c:'421', d:'Préstamos bancarios por pagar', de:fmt(m), ha:''},
+    {c:'671', d:'Gastos financieros (intereses)', de:fmt(interes), ha:''},
+    {c:'101', d:'Caja/Bancos', de:'', ha:fmt(total)}
+  ];
+}
   function rowsHTML(f){
     return f.map(x=>`<tr><td>${x.c}</td><td>${x.d}</td><td>${x.de}</td><td>${x.ha}</td></tr>`).join('');
   }
@@ -182,7 +191,8 @@
     else if(t==='servicio_sinigv') filas=compraServ(m,false);
     else if(t==='remuneraciones') filas=remuneraciones(m);
     else if(t==='venta_activo') filas=ventaActivo(m);
-
+    else if(t==='prestamo_banco') filas=pagoPrestamo(m);
+   
     outEl.innerHTML=`<p><strong>Fecha:</strong> ${fe}</p>
     <table>
       <thead><tr><th>Cuenta</th><th>Descripción</th><th>Debe</th><th>Haber</th></tr></thead>
@@ -204,3 +214,4 @@
 </script>
 </body>
 </html>
+
